@@ -6,12 +6,15 @@ config()
  * Get environment variables with defaults
  */
 export const getEnv = () => {
+  const port = process.env.PORT || process.env.APP_PORT || 5000
+
   return {
-    PORT: process.env.PORT || 5000,
+    PORT: Number(port),
     NODE_ENV: process.env.NODE_ENV || 'development',
     DATABASE_URL: process.env.DATABASE_URL,
   }
 }
+
 
 /**
  * Validate required environment variables
