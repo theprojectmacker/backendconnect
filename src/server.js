@@ -4,6 +4,9 @@ import { testConnection, getConnectionStatus } from './db/connection.js'
 import { getHealthStatus } from './utils/health.js'
 import { verifyEmailConfig } from './utils/email.js'
 import authRoutes from './routes/auth.js'
+import messagesRoutes from './routes/messages.js'
+import dashboardRoutes from './routes/dashboard.js'
+import jobsRoutes from './routes/jobs.js'
 
 const app = express()
 
@@ -13,6 +16,9 @@ app.use(express.json())
 
 // Routes
 app.use('/api/auth', authRoutes)
+app.use('/api/messages', messagesRoutes)
+app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/jobs', jobsRoutes)
 
 // Routes
 
