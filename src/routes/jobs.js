@@ -351,8 +351,10 @@ router.get('/:jobId', async (req, res) => {
 router.post('/:jobId/apply', verifyTokenMiddleware, async (req, res) => {
   try {
     const { jobId } = req.params
-    const { userId, email } = req.user
-    const { userName, phone, coverLetter, resumeUrl } = req.body
+    const { userId, email: authEmail } = req.user
+    const { userName, email, phone, coverLetter, resumeUrl } = req.body
+
+    const userEmail = email || authEmail
 
     // Validate required fields
     if (!userName) {
@@ -397,7 +399,7 @@ router.post('/:jobId/apply', verifyTokenMiddleware, async (req, res) => {
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id, job_inquiry_id, user_id, user_email, user_name, phone,
         cover_letter, resume_url, status, applied_at`,
-      [jobId, userId, email, userName, phone || null, coverLetter || null, resumeUrl || null]
+      [jobId, userId, userEmail, userName, phone || null, coverLetter || null, resumeUrl || null]
     )
 
     // Update total applications count
@@ -408,9 +410,9 @@ router.post('/:jobId/apply', verifyTokenMiddleware, async (req, res) => {
 
     // Send thank you email
     try {
-      const emailResult = await sendJobApplicationEmail(email, userName, job.title, job.company_name)
+      const emailResult = await sendJobApplicationEmail(userEmail, userName, job.title, job.company_name)
       if (!emailResult.success) {
-        console.warn(`Warning: Failed to send email to ${email}, but application was created`)
+        console.warn(`Warning: Failed to send email to ${userEmail}, but application was created`)
       }
     } catch (emailError) {
       console.error('Error sending email:', emailError.message)
