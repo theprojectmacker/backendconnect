@@ -199,10 +199,37 @@ const initializePasswordResetTable = async () => {
   }
 }
 
+/**
+ * Initialize modules table if it doesn't exist
+ */
+const initializeModulesTable = async () => {
+  try {
+    await query(`
+      CREATE TABLE IF NOT EXISTS modules (
+        id SERIAL PRIMARY KEY,
+        title VARCHAR(255) NOT NULL,
+        file_name VARCHAR(255) NOT NULL,
+        file_path VARCHAR(500) NOT NULL,
+        file_size INTEGER,
+        file_type VARCHAR(100),
+        public_url TEXT,
+        admin_id INTEGER NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `)
+    console.log('✓ Modules table initialized')
+  } catch (error) {
+    console.error('Error initializing modules table:', error.message)
+  }
+}
+
 // Initialize tables on route load
 initializeUsersTable()
 initializePasswordResetTable()
 initializeAdminAccountsTable()
+initializeModulesTable()
 
 /**
  * Generate a random reset code
@@ -994,6 +1021,72 @@ router.get('/current-user', verifyTokenMiddleware, async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to get user info',
+    })
+  }
+})
+
+/**
+ * GET /api/auth/profile
+ * Get full user profile with all personal details
+ */
+router.get('/profile', verifyTokenMiddleware, async (req, res) => {
+  try {
+    const { userId } = req.user
+
+    const result = await query(
+      `SELECT
+        id,
+        email,
+        first_name,
+        last_name,
+        date_of_birth,
+        country,
+        state,
+        city,
+        street,
+        house_number,
+        is_online,
+        is_admin,
+        last_seen,
+        created_at,
+        updated_at
+       FROM users WHERE id = $1`,
+      [userId]
+    )
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        error: 'User not found',
+      })
+    }
+
+    const user = result.rows[0]
+    res.status(200).json({
+      success: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.first_name,
+        lastName: user.last_name,
+        dateOfBirth: user.date_of_birth,
+        country: user.country,
+        state: user.state,
+        city: user.city,
+        street: user.street,
+        houseNumber: user.house_number,
+        isOnline: user.is_online,
+        isAdmin: user.is_admin,
+        lastSeen: user.last_seen,
+        createdAt: user.created_at,
+        updatedAt: user.updated_at,
+      },
+    })
+  } catch (error) {
+    console.error('Get profile error:', error.message)
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user profile',
     })
   }
 })

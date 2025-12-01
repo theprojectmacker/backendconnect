@@ -7,6 +7,7 @@ import authRoutes from './routes/auth.js'
 import messagesRoutes from './routes/messages.js'
 import dashboardRoutes from './routes/dashboard.js'
 import jobsRoutes from './routes/jobs.js'
+import modulesRoutes from './routes/modules.js'
 
 const app = express()
 
@@ -19,6 +20,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/messages', messagesRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 app.use('/api/jobs', jobsRoutes)
+app.use('/api/modules', modulesRoutes)
 
 // Routes
 
