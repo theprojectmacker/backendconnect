@@ -213,10 +213,9 @@ const initializeModulesTable = async () => {
         file_size INTEGER,
         file_type VARCHAR(100),
         public_url TEXT,
-        admin_id INTEGER NOT NULL,
+        user_id INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (admin_id) REFERENCES users(id) ON DELETE CASCADE
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `)
     console.log('✓ Modules table initialized')

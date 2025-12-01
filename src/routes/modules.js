@@ -9,49 +9,14 @@ const BUCKET_NAME = 'modules'
 const ALLOWED_TYPES = ['image/gif', 'application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/plain', 'video/mp4', 'video/webm']
 
 /**
- * Helper function to check if user is admin (handles both users and admin_accounts tables)
- */
-const isUserAdmin = async (userId, email) => {
-  // Try to get user from users table first
-  const userResult = await query(
-    'SELECT is_admin FROM users WHERE id = $1',
-    [userId]
-  )
-
-  if (userResult.rows.length > 0) {
-    return userResult.rows[0].is_admin
-  }
-
-  // If not found in users table, check admin_accounts table (for admin logins)
-  const adminResult = await query(
-    'SELECT is_active FROM admin_accounts WHERE id = $1 AND email = $2',
-    [userId, email]
-  )
-
-  return adminResult.rows.length > 0 && adminResult.rows[0].is_active
-}
-
-/**
  * GET /api/modules
- * Get all modules (admin only)
+ * Get all modules
  */
 router.get('/', verifyTokenMiddleware, async (req, res) => {
   try {
-    const { userId, email } = req.user
-
-    // Check if user is admin
-    const isAdmin = await isUserAdmin(userId, email)
-
-    if (!isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'Only admins can access modules',
-      })
-    }
-
     const result = await query(
-      `SELECT id, title, file_name, file_type, file_size, public_url, created_at, updated_at 
-       FROM modules 
+      `SELECT id, title, file_name, file_type, file_size, public_url, created_at, updated_at
+       FROM modules
        ORDER BY created_at DESC`
     )
 
@@ -70,11 +35,11 @@ router.get('/', verifyTokenMiddleware, async (req, res) => {
 
 /**
  * POST /api/modules
- * Upload a new module (admin only)
+ * Upload a new module
  */
 router.post('/', verifyTokenMiddleware, async (req, res) => {
   try {
-    const { userId, email } = req.user
+    const { userId } = req.user
     const { title, fileData, fileName, fileType, fileSize } = req.body
 
     // Validation
@@ -82,16 +47,6 @@ router.post('/', verifyTokenMiddleware, async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Title, file data, and file name are required',
-      })
-    }
-
-    // Check if user is admin
-    const isAdmin = await isUserAdmin(userId, email)
-
-    if (!isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'Only admins can upload modules',
       })
     }
 
@@ -122,7 +77,7 @@ router.post('/', verifyTokenMiddleware, async (req, res) => {
 
     // Save module metadata to database
     const result = await query(
-      `INSERT INTO modules (title, file_name, file_path, file_size, file_type, public_url, admin_id)
+      `INSERT INTO modules (title, file_name, file_path, file_size, file_type, public_url, user_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, title, file_name, file_type, file_size, public_url, created_at`,
       [title, fileName, filePath, fileSize || 0, fileType || 'application/octet-stream', uploadResult.publicUrl, userId]
@@ -143,11 +98,10 @@ router.post('/', verifyTokenMiddleware, async (req, res) => {
 
 /**
  * PUT /api/modules/:moduleId
- * Update module title (admin only)
+ * Update module title
  */
 router.put('/:moduleId', verifyTokenMiddleware, async (req, res) => {
   try {
-    const { userId, email } = req.user
     const { moduleId } = req.params
     const { title } = req.body
 
@@ -155,16 +109,6 @@ router.put('/:moduleId', verifyTokenMiddleware, async (req, res) => {
       return res.status(400).json({
         success: false,
         error: 'Title is required',
-      })
-    }
-
-    // Check if user is admin
-    const isAdmin = await isUserAdmin(userId, email)
-
-    if (!isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'Only admins can update modules',
       })
     }
 
@@ -205,22 +149,11 @@ router.put('/:moduleId', verifyTokenMiddleware, async (req, res) => {
 
 /**
  * DELETE /api/modules/:moduleId
- * Delete a module (admin only)
+ * Delete a module
  */
 router.delete('/:moduleId', verifyTokenMiddleware, async (req, res) => {
   try {
-    const { userId, email } = req.user
     const { moduleId } = req.params
-
-    // Check if user is admin
-    const isAdmin = await isUserAdmin(userId, email)
-
-    if (!isAdmin) {
-      return res.status(403).json({
-        success: false,
-        error: 'Only admins can delete modules',
-      })
-    }
 
     // Get module details
     const moduleResult = await query(
