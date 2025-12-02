@@ -39,7 +39,6 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { userId } = req.user
     const { title, fileData, fileName, fileType, fileSize } = req.body
 
     // Validation
