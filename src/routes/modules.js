@@ -76,10 +76,10 @@ router.post('/', async (req, res) => {
 
     // Save module metadata to database
     const result = await query(
-      `INSERT INTO modules (title, file_name, file_path, file_size, file_type, public_url, user_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+      `INSERT INTO modules (title, file_name, file_path, file_size, file_type, public_url)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, title, file_name, file_type, file_size, public_url, created_at`,
-      [title, fileName, filePath, fileSize || 0, fileType || 'application/octet-stream', uploadResult.publicUrl, null]
+      [title, fileName, filePath, fileSize || 0, fileType || 'application/octet-stream', uploadResult.publicUrl]
     )
 
     res.status(201).json({
