@@ -12,7 +12,7 @@ const ALLOWED_TYPES = ['image/gif', 'application/pdf', 'image/jpeg', 'image/png'
  * GET /api/modules
  * Get all modules
  */
-router.get('/', verifyTokenMiddleware, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const result = await query(
       `SELECT id, title, file_name, file_type, file_size, public_url, created_at, updated_at
@@ -37,7 +37,7 @@ router.get('/', verifyTokenMiddleware, async (req, res) => {
  * POST /api/modules
  * Upload a new module
  */
-router.post('/', verifyTokenMiddleware, async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { userId } = req.user
     const { title, fileData, fileName, fileType, fileSize } = req.body
@@ -80,7 +80,7 @@ router.post('/', verifyTokenMiddleware, async (req, res) => {
       `INSERT INTO modules (title, file_name, file_path, file_size, file_type, public_url, user_id)
        VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, title, file_name, file_type, file_size, public_url, created_at`,
-      [title, fileName, filePath, fileSize || 0, fileType || 'application/octet-stream', uploadResult.publicUrl, userId]
+      [title, fileName, filePath, fileSize || 0, fileType || 'application/octet-stream', uploadResult.publicUrl, null]
     )
 
     res.status(201).json({
@@ -100,7 +100,7 @@ router.post('/', verifyTokenMiddleware, async (req, res) => {
  * PUT /api/modules/:moduleId
  * Update module title
  */
-router.put('/:moduleId', verifyTokenMiddleware, async (req, res) => {
+router.put('/:moduleId', async (req, res) => {
   try {
     const { moduleId } = req.params
     const { title } = req.body
@@ -151,7 +151,7 @@ router.put('/:moduleId', verifyTokenMiddleware, async (req, res) => {
  * DELETE /api/modules/:moduleId
  * Delete a module
  */
-router.delete('/:moduleId', verifyTokenMiddleware, async (req, res) => {
+router.delete('/:moduleId', async (req, res) => {
   try {
     const { moduleId } = req.params
 
