@@ -6,7 +6,6 @@ import { uploadFile, deleteFile } from '../utils/supabase.js'
 const router = express.Router()
 
 const BUCKET_NAME = 'modules'
-const ALLOWED_TYPES = ['image/gif', 'application/pdf', 'image/jpeg', 'image/png', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'text/plain', 'video/mp4', 'video/webm']
 
 /**
  * GET /api/modules
@@ -49,14 +48,6 @@ router.post('/', async (req, res) => {
       })
     }
 
-    // Check file type
-    if (fileType && !ALLOWED_TYPES.includes(fileType)) {
-      return res.status(400).json({
-        success: false,
-        error: `File type not allowed. Allowed types: ${ALLOWED_TYPES.join(', ')}`,
-      })
-    }
-
     // Convert base64 to buffer
     const buffer = Buffer.from(fileData, 'base64')
 
@@ -76,10 +67,10 @@ router.post('/', async (req, res) => {
 
     // Save module metadata to database
     const result = await query(
-      `INSERT INTO modules (title, file_name, file_path, file_size, file_type, public_url)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO modules (title, file_name, file_path, file_size, file_type, public_url, admin_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, title, file_name, file_type, file_size, public_url, created_at`,
-      [title, fileName, filePath, fileSize || 0, fileType || 'application/octet-stream', uploadResult.publicUrl]
+      [title, fileName, filePath, fileSize || 0, fileType || 'application/octet-stream', uploadResult.publicUrl, null]
     )
 
     res.status(201).json({

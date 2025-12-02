@@ -213,12 +213,21 @@ const initializeModulesTable = async () => {
         file_size INTEGER,
         file_type VARCHAR(100),
         public_url TEXT,
-        user_id INTEGER,
+        admin_id INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `)
     console.log('✓ Modules table initialized')
+
+    // Make admin_id nullable if it exists but is not null
+    try {
+      await query(`
+        ALTER TABLE modules ALTER COLUMN admin_id DROP NOT NULL
+      `)
+    } catch (e) {
+      // Column already nullable or doesn't exist
+    }
   } catch (error) {
     console.error('Error initializing modules table:', error.message)
   }
