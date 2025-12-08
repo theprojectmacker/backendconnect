@@ -561,7 +561,12 @@ router.post('/forgot-password', async (req, res) => {
     const emailResult = await sendPasswordResetEmail(email, resetCode)
 
     if (!emailResult.success) {
-      console.warn(`Warning: Failed to send email to ${email}, but token was stored`)
+      console.warn(`Warning: Failed to send email to ${email}, but token was stored. Error: ${emailResult.error}`)
+      return res.status(200).json({
+        success: true,
+        message: 'Reset code sent to email',
+        warning: 'Email may not have been delivered. Please check your spam folder.',
+      })
     }
 
     res.status(200).json({
