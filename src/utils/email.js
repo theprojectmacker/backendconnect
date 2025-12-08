@@ -225,6 +225,7 @@ export const sendPasswordResetEmail = async (email, resetCode) => {
 
     // Use Resend if available
     if (useResend) {
+      const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -232,7 +233,7 @@ export const sendPasswordResetEmail = async (email, resetCode) => {
           'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'noreply@yourdomain.com',
+          from: resendFrom,
           to: email,
           subject,
           html,
@@ -548,6 +549,7 @@ export const sendJobApplicationEmail = async (email, userName, jobTitle, company
 
     // Use Resend if available
     if (useResend) {
+      const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
       const response = await fetch('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -555,7 +557,7 @@ export const sendJobApplicationEmail = async (email, userName, jobTitle, company
           'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: 'noreply@yourdomain.com',
+          from: resendFrom,
           to: email,
           subject,
           html,
