@@ -12,10 +12,15 @@ const transporter = nodemailer.createTransport({
 })
 
 // Log email config on startup
-if (process.env.EMAIL_USER) {
-  console.log(`✓ Email configured with Gmail SMTP: ${process.env.EMAIL_USER}`)
+console.log('📧 Email Configuration Status:')
+console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✓ Set to ' + process.env.EMAIL_USER : '✗ NOT SET'}`)
+console.log(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? '✓ Set (' + process.env.EMAIL_PASSWORD.length + ' chars)' : '✗ NOT SET'}`)
+console.log(`   EMAIL_FROM: ${process.env.EMAIL_FROM ? '✓ Set' : '✗ NOT SET'}`)
+
+if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+  console.log('✓ Email service will use Gmail SMTP')
 } else {
-  console.warn('⚠️  No email service configured - set EMAIL_USER and EMAIL_PASSWORD')
+  console.warn('⚠️  Email service NOT configured - PASSWORD RESET EMAILS WILL NOT WORK')
 }
 
 /**
