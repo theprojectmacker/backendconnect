@@ -1,31 +1,21 @@
 import nodemailer from 'nodemailer'
 
-// Check which email service to use
-const useResend = !!process.env.RESEND_API_KEY
-const useGmail = !!process.env.EMAIL_USER
-
-let transporter = null
-
-if (useGmail && !useResend) {
-  // Gmail transporter (for local development)
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASSWORD,
-    },
-    connectionTimeout: 5000,
-    socketTimeout: 5000,
-  })
-}
+// Gmail SMTP transporter
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
+  },
+  connectionTimeout: 5000,
+  socketTimeout: 5000,
+})
 
 // Log email config on startup
-if (useResend) {
-  console.log('✓ Email configured with Resend')
-} else if (useGmail) {
-  console.log(`✓ Email configured for: ${process.env.EMAIL_USER}`)
+if (process.env.EMAIL_USER) {
+  console.log(`✓ Email configured with Gmail SMTP: ${process.env.EMAIL_USER}`)
 } else {
-  console.warn('⚠️  No email service configured - set RESEND_API_KEY or EMAIL_USER/EMAIL_PASSWORD')
+  console.warn('⚠️  No email service configured - set EMAIL_USER and EMAIL_PASSWORD')
 }
 
 /**
@@ -216,44 +206,12 @@ const generatePasswordResetEmail = (resetCode, recipientEmail) => {
 }
 
 /**
- * Send password reset email with Resend or Gmail
+ * Send password reset email with Gmail SMTP
  */
 export const sendPasswordResetEmail = async (email, resetCode) => {
   try {
     const subject = '🔐 Password Reset Request - PWDE App'
     const html = generatePasswordResetEmail(resetCode, email)
-
-    // Use Resend if available
-    if (useResend) {
-      const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: resendFrom,
-          to: email,
-          subject,
-          html,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Resend API error')
-      }
-
-      const data = await response.json()
-      console.log(`✓ Password reset email sent to ${email} via Resend. ID: ${data.id}`)
-      return { success: true, messageId: data.id }
-    }
-
-    // Fallback to Gmail
-    if (!transporter) {
-      throw new Error('No email service configured. Set RESEND_API_KEY or EMAIL_USER/EMAIL_PASSWORD.')
-    }
 
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -540,44 +498,12 @@ const generateJobApplicationEmail = (userName, jobTitle, companyName) => {
 }
 
 /**
- * Send job application confirmation email with Resend or Gmail
+ * Send job application confirmation email with Gmail SMTP
  */
 export const sendJobApplicationEmail = async (email, userName, jobTitle, companyName) => {
   try {
     const subject = `🎉 Application Received for ${jobTitle} - ${companyName || 'PWDE App'}`
     const html = generateJobApplicationEmail(userName, jobTitle, companyName)
-
-    // Use Resend if available
-    if (useResend) {
-      const resendFrom = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: resendFrom,
-          to: email,
-          subject,
-          html,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Resend API error')
-      }
-
-      const data = await response.json()
-      console.log(`✓ Job application email sent to ${email} via Resend. ID: ${data.id}`)
-      return { success: true, messageId: data.id }
-    }
-
-    // Fallback to Gmail
-    if (!transporter) {
-      throw new Error('No email service configured. Set RESEND_API_KEY or EMAIL_USER/EMAIL_PASSWORD.')
-    }
 
     const mailOptions = {
       from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
@@ -601,48 +527,20 @@ export const sendJobApplicationEmail = async (email, userName, jobTitle, company
 }
 
 /**
- * Verify email configuration
+ * Verify Gmail SMTP email configuration
  */
 export const verifyEmailConfig = async () => {
   try {
     console.log('🔄 Verifying email configuration...')
+    console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✓ Set' : '✗ Not set'}`)
+    console.log(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? '✓ Set' : '✗ Not set'}`)
 
-    // Check Resend
-    if (useResend) {
-      console.log(`   RESEND_API_KEY: ✓ Set`)
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-        },
-      })
-      if (response.ok) {
-        console.log('✓ Resend email service is configured correctly')
-        return true
-      } else {
-        throw new Error('Invalid Resend API key')
-      }
-    }
-
-    // Check Gmail
-    if (useGmail) {
-      console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✓ Set' : '✗ Not set'}`)
-      console.log(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? '✓ Set' : '✗ Not set'}`)
-
-      if (!transporter) {
-        throw new Error('Gmail transporter not initialized')
-      }
-
-      await transporter.verify()
-      console.log('✓ Gmail email service is configured correctly')
-      return true
-    }
-
-    console.warn('⚠️  No email service configured')
-    return false
+    await transporter.verify()
+    console.log('✓ Gmail SMTP email service is configured correctly')
+    return true
   } catch (error) {
     console.error('✗ Email service configuration error:', error.code || '', error.message)
-    console.error('   Hint: For Render, set RESEND_API_KEY. For local dev, set EMAIL_USER/EMAIL_PASSWORD.')
+    console.error('   Hint: Set EMAIL_USER and EMAIL_PASSWORD for Gmail SMTP.')
     return false
   }
 }

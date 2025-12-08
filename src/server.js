@@ -83,14 +83,12 @@ app.post('/api/db/test', async (req, res) => {
  * Shows what email service is configured
  */
 app.get('/api/email-config', (req, res) => {
-  const hasResend = !!process.env.RESEND_API_KEY
   const hasGmail = !!process.env.EMAIL_USER
   const emailUser = process.env.EMAIL_USER ? process.env.EMAIL_USER.substring(0, 5) + '***' : 'not set'
 
   res.json({
-    resend: hasResend ? '✓ Configured' : '✗ Not configured',
     gmail: hasGmail ? `✓ Configured (${emailUser})` : '✗ Not configured',
-    activeService: hasResend ? 'Resend' : hasGmail ? 'Gmail' : 'None',
+    activeService: hasGmail ? 'Gmail SMTP' : 'None',
   })
 })
 
