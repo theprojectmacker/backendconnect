@@ -1,24 +1,33 @@
 import nodemailer from 'nodemailer'
 
-// Gmail SMTP transporter
+// Gmail SMTP transporter with explicit configuration
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587, // Use 587 for TLS or 465 for SSL
+  secure: false, // true for 465, false for other ports (587 uses STARTTLS)
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASSWORD,
   },
-  connectionTimeout: 5000,
-  socketTimeout: 5000,
+  tls: {
+    rejectUnauthorized: true,
+    minVersion: 'TLSv1.2'
+  },
+  connectionTimeout: 30000, // 30 seconds
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
 })
 
 // Log email config on startup
 console.log('📧 Email Configuration Status:')
+console.log(`   SMTP Host: smtp.gmail.com`)
+console.log(`   SMTP Port: 587 (TLS)`)
 console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✓ Set to ' + process.env.EMAIL_USER : '✗ NOT SET'}`)
 console.log(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? '✓ Set (' + process.env.EMAIL_PASSWORD.length + ' chars)' : '✗ NOT SET'}`)
 console.log(`   EMAIL_FROM: ${process.env.EMAIL_FROM ? '✓ Set' : '✗ NOT SET'}`)
 
 if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
-  console.log('✓ Email service will use Gmail SMTP')
+  console.log('✓ Email service will use Gmail SMTP (smtp.gmail.com:587)')
 } else {
   console.warn('⚠️  Email service NOT configured - PASSWORD RESET EMAILS WILL NOT WORK')
 }
@@ -227,7 +236,7 @@ export const sendPasswordResetEmail = async (email, resetCode) => {
 
     const sendMailPromise = transporter.sendMail(mailOptions)
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Email send timeout (10s)')), 10000)
+      setTimeout(() => reject(new Error('Email send timeout (30s)')), 30000)
     )
 
     const info = await Promise.race([sendMailPromise, timeoutPromise])
@@ -236,6 +245,7 @@ export const sendPasswordResetEmail = async (email, resetCode) => {
   } catch (error) {
     console.error(`✗ Failed to send password reset email to ${email}`)
     console.error(`   Error: ${error.message}`)
+    console.error(`   Error Code: ${error.code || 'N/A'}`)
     return { success: false, error: error.message }
   }
 }
@@ -519,7 +529,7 @@ export const sendJobApplicationEmail = async (email, userName, jobTitle, company
 
     const sendMailPromise = transporter.sendMail(mailOptions)
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Email send timeout (10s)')), 10000)
+      setTimeout(() => reject(new Error('Email send timeout (30s)')), 30000)
     )
 
     const info = await Promise.race([sendMailPromise, timeoutPromise])
@@ -527,6 +537,7 @@ export const sendJobApplicationEmail = async (email, userName, jobTitle, company
     return { success: true, messageId: info.messageId }
   } catch (error) {
     console.error(`✗ Failed to send job application email to ${email}:`, error.message)
+    console.error(`   Error Code: ${error.code || 'N/A'}`)
     return { success: false, error: error.message }
   }
 }
@@ -539,13 +550,17 @@ export const verifyEmailConfig = async () => {
     console.log('🔄 Verifying email configuration...')
     console.log(`   EMAIL_USER: ${process.env.EMAIL_USER ? '✓ Set' : '✗ Not set'}`)
     console.log(`   EMAIL_PASSWORD: ${process.env.EMAIL_PASSWORD ? '✓ Set' : '✗ Not set'}`)
+    console.log(`   Connecting to smtp.gmail.com:587...`)
 
     await transporter.verify()
-    console.log('✓ Gmail SMTP email service is configured correctly')
+    console.log('✓ Gmail SMTP email service is configured correctly and connected!')
     return true
   } catch (error) {
-    console.error('✗ Email service configuration error:', error.code || '', error.message)
-    console.error('   Hint: Set EMAIL_USER and EMAIL_PASSWORD for Gmail SMTP.')
+    console.error('✗ Email service configuration error:')
+    console.error(`   Error Code: ${error.code || 'N/A'}`)
+    console.error(`   Error Message: ${error.message}`)
+    console.error('   Hint: Make sure you are using a Gmail App Password (not your regular password)')
+    console.error('   Hint: Check if Render.com allows outbound SMTP connections on port 587')
     return false
   }
 }
