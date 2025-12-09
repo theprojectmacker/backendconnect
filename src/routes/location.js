@@ -258,7 +258,10 @@ router.post('/send-alert', verifyTokenMiddleware, async (req, res) => {
     const { contactUserId, latitude, longitude } = req.body
     const { userId } = req.user
 
+    console.log('Alert request - userId:', userId, 'contactUserId:', contactUserId, 'location:', {latitude, longitude})
+
     if (!contactUserId || latitude === undefined || longitude === undefined) {
+      console.log('Alert error: Missing required parameters')
       return res.status(400).json({
         success: false,
         error: 'Contact user ID, latitude, and longitude are required',
@@ -271,7 +274,10 @@ router.post('/send-alert', verifyTokenMiddleware, async (req, res) => {
       [userId, contactUserId]
     )
 
+    console.log('Contact check result:', contactCheck.rows.length)
+
     if (contactCheck.rows.length === 0) {
+      console.log('Alert error: Contact not found in user contacts')
       return res.status(403).json({
         success: false,
         error: 'This user is not in your contacts',
@@ -305,13 +311,14 @@ router.post('/send-alert', verifyTokenMiddleware, async (req, res) => {
       [userId, latitude, longitude]
     )
 
+    console.log('Alert created successfully:', alertResult.rows[0])
     res.status(201).json({
       success: true,
       message: 'Alert sent successfully',
       alert: alertResult.rows[0],
     })
   } catch (error) {
-    console.error('Send alert error:', error.message)
+    console.error('Send alert error:', error.message, error.stack)
     res.status(500).json({
       success: false,
       error: 'Failed to send alert',
