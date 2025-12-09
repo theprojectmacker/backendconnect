@@ -26,7 +26,7 @@ const initializeLocationTables = async () => {
     await query(`
       CREATE TABLE IF NOT EXISTS location_tracking (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        user_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
         latitude DECIMAL(10, 8) NOT NULL,
         longitude DECIMAL(11, 8) NOT NULL,
         accuracy FLOAT,
